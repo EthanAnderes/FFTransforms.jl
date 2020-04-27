@@ -5,11 +5,14 @@ using Reexport
 using AbstractFFTs
 using LinearAlgebra
 
-export plan, 𝕎, r𝕎, 𝕀, ⊗
-export pix, freq, rfreq 
+export plan, unitary_plan, FFT, AdjointFFT,
+		𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗,
+		pix, freq, rfreq 
 
-# this needs updating for these split plans
 include("xkgrids.jl")
+
+# Aliases for FFTW type unions
+# ====================================
 
 FFTWReal    = Union{Float32,Float64}
 FFTWComplex = Union{Complex{Float32},Complex{Float64}}
@@ -22,31 +25,94 @@ Plan{T,d} = Union{
  	FFTW.rFFTWPlan{T,1,false,d}
 }
 
-# completely describes a plan 
-# if scale_forward[i] == true then scale is one and no mult is preformed
+# Holder type for forward and backward plans, region, scalars etc..
+# =================================================================
 
-# TODO: make another struct which holds it's own storage
-
-struct FFT{d, T_forward_arg<:FFTWNumber, T_inverse_arg<:FFTWNumber, SF<:Number, SI<:Number, FT<:Plan, IT<:Plan}
+struct FFT{T_forward_arg<:FFTWNumber, d, T_inverse_arg<:FFTWNumber, SF<:Number, SI<:Number, FT<:Plan, IT<:Plan}
 	unscaled_forward_transform::FT
 	unscaled_inverse_transform::IT
-	scale_forward::SF	
-	scale_inverse::SI	
+	scale_forward::SF
+	scale_inverse::SI
     sz_forward_arg::NTuple{d,Int}
     sz_inverse_arg::NTuple{d,Int}
 	region::NTuple{d,Bool}	
+
+	function FFT{Tf,d}(uft::FT,uit::IT,sf::SF,si::SI,szf,szi,r) where {Tf<:FFTWNumber,d,FT,IT,SF,SI}
+		Ti = Complex{real(Tf)}
+		return new{Tf,d,Ti,SF,SI,FT,IT}(uft,uit,sf,si,szf,szi,r)
+	end
 end
+
+struct AdjointFFT{T_forward_arg<:FFTWNumber, d, T_inverse_arg<:FFTWNumber, SF<:Number, SI<:Number, FT<:Plan, IT<:Plan}
+	p::FFT{T_forward_arg, d, T_inverse_arg, SF, SI, FT, IT}
+end
+
+# Constructors
+# --------------------------------
+# SizeInt and RegionBool are type wrappers to allow
+# @generated plan
 
 struct SizeInt{sz} end #e.g. (512,1024,2,4)#
 
 struct RegionBool{rg} end #e.g. (false,true,false,true)#
 
+# @generated function plan(
+# 		::Type{T_forward_arg}, 
+# 		::Type{SizeInt{sz_forward_arg}}, 
+# 		::Type{RegionBool{region}}, 
+# 		scale_forward::SF
+# 	) where {T_forward_arg<:FFTWNumber, sz_forward_arg, region, SF<:Number}
+
+# 	d          = length(sz_forward_arg)
+# 	region_tp  = tuple(findall(region)...)
+# 	X          = Array{T_forward_arg,d}(undef, sz_forward_arg...) 
+
+# 	if T_forward_arg <: FFTWReal
+		
+# 		unscaled_forward_transform = plan_rfft(X, region_tp; flags=FFTW.ESTIMATE) 
+# 		Y = unscaled_forward_transform * X
+# 		unscaled_inverse_transform = plan_brfft(Y, sz_forward_arg[region_tp[1]], region_tp; flags=FFTW.ESTIMATE) 
+# 		sz_inverse_arg = tuple(FFTW.rfft_output_size(X, region_tp)...)
+
+# 	elseif T_forward_arg <: FFTWComplex
+
+# 		unscaled_forward_transform = plan_fft(X, region_tp; flags=FFTW.ESTIMATE) 
+# 		Y = unscaled_forward_transform * X
+# 		unscaled_inverse_transform = plan_bfft(Y, region_tp; flags=FFTW.ESTIMATE) 
+# 		sz_inverse_arg = sz_forward_arg
+
+# 	end
+
+# 	FT = typeof(unscaled_forward_transform)
+# 	IT = typeof(unscaled_inverse_transform)
+
+# 	real_T_inverse_arg = real(T_forward_arg)
+# 	T_inverse_arg = Complex{real_T_inverse_arg} 
+
+# 	ifft_normalization = FFTW.normalization(real_T_inverse_arg, sz_forward_arg, region_tp)
+
+# 	return quote
+#         $(Expr(:meta, :inline))
+#         scale_inverse  = $ifft_normalization / scale_forward
+# 		SI = typeof(scale_inverse)
+# 		FFT{T_forward_arg, $d, $T_inverse_arg, SF, SI, $FT, $IT}(
+# 			$unscaled_forward_transform,
+# 			$unscaled_inverse_transform,
+# 			scale_forward,	
+# 			scale_inverse,	
+# 		    sz_forward_arg,
+# 		    $sz_inverse_arg,
+# 			region,	
+# 		)
+#     end
+# end  
+
 @generated function plan(
 		::Type{T_forward_arg}, 
 		::Type{SizeInt{sz_forward_arg}}, 
-		::Type{RegionBool{region}}, 
-		scale_forward::SF
-	) where {T_forward_arg<:FFTWNumber, sz_forward_arg, region, SF<:Number}
+		::Type{RegionBool{region}},
+		scale_forward::Number 
+	) where {T_forward_arg<:FFTWNumber, sz_forward_arg, region}
 
 	d          = length(sz_forward_arg)
 	region_tp  = tuple(findall(region)...)
@@ -68,111 +134,177 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 
 	end
 
-	FT = typeof(unscaled_forward_transform)
-	IT = typeof(unscaled_inverse_transform)
-
-	real_T_inverse_arg = real(T_forward_arg)
-	T_inverse_arg = Complex{real_T_inverse_arg} 
-
-	ifft_normalization = FFTW.normalization(real_T_inverse_arg, sz_forward_arg, region_tp)
+	ifft_normalization = FFTW.normalization(real(T_forward_arg), sz_forward_arg, region_tp)
 
 	return quote
         $(Expr(:meta, :inline))
-        scale_inverse  = $ifft_normalization / scale_forward
-		SI = typeof(scale_inverse)
-		FFT{$d, T_forward_arg, $T_inverse_arg, SF, SI, $FT, $IT}(
+		FFT{$T_forward_arg, $d}(
 			$unscaled_forward_transform,
 			$unscaled_inverse_transform,
 			scale_forward,	
-			scale_inverse,	
-		    sz_forward_arg,
+			$ifft_normalization / scale_forward,	
+		    $sz_forward_arg,
 		    $sz_inverse_arg,
-			region,	
+			$region,	
 		)
+
     end
 end  
 
 
-# TODO: plan(𝕎{d,T}) ...
-# TODO: unitary_plan(𝕎{d,T}) ... 
-# TODO: adjoint plan 
+function Base.adjoint(p::FFT) 
+	return AdjointFFT(p)
+end 
+
+function Base.adjoint(p::AdjointFFT) 
+	return p.p
+end 
+
+
+
 
 # Define how these plan holders operate
-# todo mul! and adjoint
 # -------------------------------
 
-function Base.:*(p::FFT{d,Tf}, x::Array{Tf,d}) where {d,Tf} 
-	#return p.scale_forward .* (p.unscaled_forward_transform * x)
+# TODO: add mul!, lmul! and rmul!
+
+
+function Base.:*(p::FFT{Tf,d}, x::Array{Tf,d}) where {d,Tf} 
 	return LinearAlgebra.rmul!(p.unscaled_forward_transform * x, p.scale_forward)
 end
 
 
-function Base.:\(p::FFT{d,Tf,Tb}, y::Array{Tb,d}) where {d,Tf,Tb}
-	#return p.scale_inverse .* (p.unscaled_inverse_transform * y)
+function Base.:\(p::FFT{Tf,d,Tb}, y::Array{Tb,d}) where {d,Tf,Tb}
 	return LinearAlgebra.rmul!(p.unscaled_inverse_transform * y, p.scale_inverse)
 end
 
 
+# the adjoint * x is the unscaled inverse transform but with forward scaling
+
+function Base.:*(p::AdjointFFT{Tf,d,Tb}, x::Array{Tb,d}) where {d,Tf,Tb} 
+	return LinearAlgebra.rmul!(p.p.unscaled_inverse_transform * x, p.p.scale_forward)
+end
+
+
+function Base.:\(p::AdjointFFT{Tf,d,Tb}, y::Array{Tf,d}) where {d,Tf,Tb}
+	return LinearAlgebra.rmul!(p.p.unscaled_forward_transform * y, p.p.scale_inverse)
+end
+
+
+
+# Extracting/converting to a real plan and/or a complex plan
+# -------------------------------
+
+function Base.real(p::FFT{T_forward_arg, d, T_inverse_arg}) where {T_forward_arg, d, T_inverse_arg}
+	return plan(
+		real(T_forward_arg), 
+		SizeInt{p.sz_forward_arg}, 
+		RegionBool{p.region}, 
+		p.scale_forward
+	)
+end 
+
+function Base.complex(p::FFT{T_forward_arg, d, T_inverse_arg}) where {T_forward_arg, d, T_inverse_arg}
+	CT = Complex{real(T_forward_arg)}
+	return plan(
+		Complex{real(T_forward_arg)}, 
+		SizeInt{p.sz_forward_arg}, 
+		RegionBool{p.region}, 
+		p.scale_forward
+	)
+end 
+
+
 # plans via kron's of FFTs and Identity operators
-# ---------------------
+# ================================================
 
 # The following structs allow lazy construction of an fft plan.
 # Mixing 𝕀 and 𝕎 with ⊗ creates another 𝕎 (or 𝕀) until a final
 # scalar multplier on the right triggers plan creation
 
-struct 𝕎{d, T_forward_arg<:FFTWNumber}
+# 𝕎 holds sz (size of the input array) 
+# and region (which determines which axes get FFT'd)
+# --------------------------
+struct 𝕎{T_forward_arg<:FFTWNumber,d}
 	sz::NTuple{d,Int} 
 	region::NTuple{d,Bool} 
 end 
 
-𝕎(n::Vararg{Int,d})            where d     = 𝕎{d,Complex{Float64}}(n, tuple(trues(d)...))
-𝕎(::Type{T}, n::Vararg{Int,d}) where {d,T} = 𝕎{d,T}(n, tuple(trues(d)...))
+𝕎(::Type{T}, n::Vararg{Int,d}) where {T,d} = 𝕎{T,d}(n, tuple(trues(d)...))
 
-r𝕎(n::Vararg{Int,d})            where d     = 𝕎{d,Float64}(n, tuple(trues(d)...))
-r𝕎(::Type{T}, n::Vararg{Int,d}) where {d,T} = 𝕎{d,T}(n, tuple(trues(d)...))
+# some shorthand alternatives to 𝕎(n) which defaults to Complex{Float64}
 
+𝕎(n::Vararg{Int,d}) where {d} = 𝕎{Complex{Float64},d}(n, tuple(trues(d)...))
+
+𝕎32(n::Vararg{Int,d}) where {d} = 𝕎{Complex{Float32},d}(n, tuple(trues(d)...))
+
+r𝕎(n::Vararg{Int,d}) where {d} = 𝕎{Float64,d}(n, tuple(trues(d)...))
+
+r𝕎32(n::Vararg{Int,d}) where {d} = 𝕎{Float32,d}(n, tuple(trues(d)...))
+
+
+# 𝕀 only encode sz (size of the input array)
+# --------------------------
 struct 𝕀{d}
 	sz::NTuple{d,Int} 
-end 
+end
 
-𝕀(n::Vararg{Int,d}) where d = 𝕀{d}(n)
+𝕀(n::Vararg{Int,d}) where {d} = 𝕀{d}(n)
 
 
 # Define the lazy kron operators. The last mult on the right by a scalar 
 # is the trigger for generating a concrete plan
+# --------------------------
+
 function ⊗(i::𝕀{n}, j::𝕀{d}) where {n,d} 
 	sz  = tuple(i.sz..., j.sz...)
 	return 𝕀{d+n}(sz)
 end
 
-function ⊗(i::𝕀{n}, w::𝕎{d,T}) where {n,d,T} 
+function ⊗(i::𝕀{n}, w::𝕎{T,d}) where {n,T,d} 
 	sz     = tuple(i.sz..., w.sz...)
 	region = tuple(falses(n)..., w.region...)
-	return 𝕎{d+n,T}(sz,region)
+	return 𝕎{T,d+n}(sz,region)
 end
 
-function ⊗(w::𝕎{d,T}, i::𝕀{n}) where {n,d,T} 
+function ⊗(w::𝕎{T,d}, i::𝕀{n}) where {n,T,d} 
 	sz     = tuple(w.sz..., i.sz...)
 	region = tuple(w.region..., falses(n)...)
-	return 𝕎{d+n,T}(sz,region)
+	return 𝕎{T,d+n}(sz,region)
 end
 
 # The element type of the first 𝕎 (reading left to right) determines 
 # the overall type of the transform 
-function ⊗(w::𝕎{d,R}, v::𝕎{n,T}) where {d,n,R<:FFTWReal,T<:FFTWNumber} 
+# Do we want this to promote on the real type? 
+# .... so 𝕎{R<:FFTWReal,d}    ⊗ 𝕎{T,d} -> promote_type(R,real(T))
+# ....and 𝕎{R<:FFTWComplex,d} ⊗ 𝕎{T,d} -> Complex{promote_type(real(R),real(T))}
+function ⊗(w::𝕎{R,d}, v::𝕎{T,n}) where {d,n,R<:FFTWNumber,T<:FFTWNumber} 
 	sz     = tuple(w.sz..., v.sz...)
 	region = tuple(w.region..., v.region...)
-	return 𝕎{d+n,R}(sz,region)
+	return 𝕎{R,d+n}(sz,region)
 end
+
+
+# Triggering a planned FFT from 𝕎 
+# ===========================================
 
 # Scalar multiply on the right is the trigger for generating a concrete plan
 # scale == true is the scentanal for an unscaled plan
 # 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₁) ⊗ 𝕎(n₂) -> 𝕎
 # 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₁) ⊗ 𝕎(n₂) * scale -> plan
-function Base.:*(w::𝕎{d,T}, s::S) where {d,T,S} 
-	plan(T,SizeInt{w.sz},RegionBool{w.region},s)
+
+Base.:*(w::𝕎{T,d}, s::S) where {d,T,S} = plan(w, s)
+
+function plan(w::𝕎{T,d}, s::S) where {d,T,S} 
+	return plan(T,SizeInt{w.sz},RegionBool{w.region},s)
 end 
 
+plan(w::𝕎{T,d}) where {T,d} = plan(w::𝕎{T,d}, true) 
+
+function unitary_plan(w::𝕎{T,d}) where {T,d}
+	s = prod(1/√i[1] for i in zip(w.sz,w.region) if i[2])
+	return plan(w, s)
+end
 
 
 end
