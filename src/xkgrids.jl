@@ -2,8 +2,8 @@
 
 function pix(n::Int, p::T) where T<:Real
     Δx = p/n
-    x  = (0:n-1) * Δx
-    return x 
+    x  = (0:n-1) * Δx |> collect
+    return T.(x) 
 end
 
 function pix(n::NTuple{d,Int}, p::NTuple{d,T}) where {d,T<:Real}
@@ -15,7 +15,7 @@ function freq(n::Int, p::T) where T<:Real
     Δk   = 2π/p
     nyq  = 2π/(2Δx)
     k    = _fft_output_index_2_freq.(1:n, n, p)
-    return k
+    return T.(k)
 end
 
 function freq(n::NTuple{d,Int}, p::NTuple{d,T}, region::NTuple{d,Bool}) where {d,T<:Real}
@@ -30,11 +30,10 @@ end
 
 function rfreq(n::NTuple{d,Int}, p::NTuple{d,T}, region::NTuple{d,Bool}) where {d,T<:Real}
     ir = findfirst(region)
-    rtn = map(n, p, region, 1:d) do ni, pi, ri, i
+    return map(n, p, region, tuple(1:d...)) do ni, pi, ri, i
         !ri   ? pix(ni, pi) : 
         i==ir ? freq(ni, pi)[1:(ni÷2+1)] : freq(ni, pi)
-    end
-    tuple(rtn...)
+    end::NTuple{4,Array{T,1}}
 end
 
 

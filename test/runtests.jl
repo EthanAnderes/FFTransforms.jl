@@ -21,15 +21,6 @@ FF = FFTransforms
 				FF.RegionBool{reg}, 
 				scf
 			)
-			# FT = plan(
-			# 	Tf, 
-			# 	szf, 
-			# 	reg, 
-			# 	scf
-			# )
-
-
-
 			X = rand(Tf, szf)
 			Y = FT.scale_forward .* (FT.unscaled_forward_transform * X)
 			X′ = FT.scale_inverse .* (FT.unscaled_inverse_transform * Y)
@@ -57,7 +48,7 @@ FF = FFTransforms
 		FT6 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) |> plan |> adjoint
 		FT7 = FT5'
 		FT8 = plan(r𝕎(n₁, n₂) ⊗ 𝕀(n₃, n₄))'
-		@inferred plan(r𝕎(n₁, n₂) ⊗ 𝕀(n₃, n₄))
+		@inferred plan(r𝕎32(n₁, n₂) ⊗ 𝕀(n₃, n₄))
 
 		X = rand(Float64, n₁, n₂, n₃, n₄)
 
@@ -75,12 +66,15 @@ FF = FFTransforms
 		@inferred complex(𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
 		@inferred real(𝕀(n₁) ⊗ 𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
 
+		@inferred complex(𝕀(n₁) ⊗ r𝕎32(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
+		@inferred real(𝕀(n₁) ⊗ 𝕎32(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
+
 	end
 
 
 	let 
 		n₁, n₂, n₃, n₄ = 12, 10, 256, 5
-		p₁, p₂, p₃, p₄ = 1.0, 2π, 10.0, 2.0
+		p₁, p₂, p₃, p₄ = Float32.((1.0, 2π, 10.0, 2.0))
 		r₁, r₂, r₃, r₄ = false, true, false, true
 		@inferred pix(n₁, p₁)
 		@inferred pix((n₁, n₂, n₃, n₄), (p₁, p₂, p₃, p₄))

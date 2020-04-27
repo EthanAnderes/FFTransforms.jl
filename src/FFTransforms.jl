@@ -56,57 +56,6 @@ struct SizeInt{sz} end #e.g. (512,1024,2,4)#
 
 struct RegionBool{rg} end #e.g. (false,true,false,true)#
 
-# @generated function plan(
-# 		::Type{T_forward_arg}, 
-# 		::Type{SizeInt{sz_forward_arg}}, 
-# 		::Type{RegionBool{region}}, 
-# 		scale_forward::SF
-# 	) where {T_forward_arg<:FFTWNumber, sz_forward_arg, region, SF<:Number}
-
-# 	d          = length(sz_forward_arg)
-# 	region_tp  = tuple(findall(region)...)
-# 	X          = Array{T_forward_arg,d}(undef, sz_forward_arg...) 
-
-# 	if T_forward_arg <: FFTWReal
-		
-# 		unscaled_forward_transform = plan_rfft(X, region_tp; flags=FFTW.ESTIMATE) 
-# 		Y = unscaled_forward_transform * X
-# 		unscaled_inverse_transform = plan_brfft(Y, sz_forward_arg[region_tp[1]], region_tp; flags=FFTW.ESTIMATE) 
-# 		sz_inverse_arg = tuple(FFTW.rfft_output_size(X, region_tp)...)
-
-# 	elseif T_forward_arg <: FFTWComplex
-
-# 		unscaled_forward_transform = plan_fft(X, region_tp; flags=FFTW.ESTIMATE) 
-# 		Y = unscaled_forward_transform * X
-# 		unscaled_inverse_transform = plan_bfft(Y, region_tp; flags=FFTW.ESTIMATE) 
-# 		sz_inverse_arg = sz_forward_arg
-
-# 	end
-
-# 	FT = typeof(unscaled_forward_transform)
-# 	IT = typeof(unscaled_inverse_transform)
-
-# 	real_T_inverse_arg = real(T_forward_arg)
-# 	T_inverse_arg = Complex{real_T_inverse_arg} 
-
-# 	ifft_normalization = FFTW.normalization(real_T_inverse_arg, sz_forward_arg, region_tp)
-
-# 	return quote
-#         $(Expr(:meta, :inline))
-#         scale_inverse  = $ifft_normalization / scale_forward
-# 		SI = typeof(scale_inverse)
-# 		FFT{T_forward_arg, $d, $T_inverse_arg, SF, SI, $FT, $IT}(
-# 			$unscaled_forward_transform,
-# 			$unscaled_inverse_transform,
-# 			scale_forward,	
-# 			scale_inverse,	
-# 		    sz_forward_arg,
-# 		    $sz_inverse_arg,
-# 			region,	
-# 		)
-#     end
-# end  
-
 @generated function plan(
 		::Type{T_forward_arg}, 
 		::Type{SizeInt{sz_forward_arg}}, 
@@ -147,10 +96,8 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 		    $sz_inverse_arg,
 			$region,	
 		)
-
     end
 end  
-
 
 function Base.adjoint(p::FFT) 
 	return AdjointFFT(p)
@@ -195,23 +142,28 @@ end
 # Extracting/converting to a real plan and/or a complex plan
 # -------------------------------
 
-function Base.real(p::FFT{T_forward_arg, d, T_inverse_arg}) where {T_forward_arg, d, T_inverse_arg}
+function Base.real(p::FFT{Tf,d,Ti,Sf,Si,Ft,It}) where {Tf,d,Ti,Sf,Si,Ft,It}
+	Tf′ = real(Tf)
+	Ft′ = FFTW.rFFTWPlan{Tf′,-1, false, d}
+	It′ = FFTW.rFFTWPlan{Ti , 1, false, d}
 	return plan(
-		real(T_forward_arg), 
+		Tf′, 
 		SizeInt{p.sz_forward_arg}, 
 		RegionBool{p.region}, 
 		p.scale_forward
-	)
+	)::FFT{Tf′,d,Ti,Sf,Si,Ft′,It′}
 end 
 
-function Base.complex(p::FFT{T_forward_arg, d, T_inverse_arg}) where {T_forward_arg, d, T_inverse_arg}
-	CT = Complex{real(T_forward_arg)}
+function Base.complex(p::FFT{Tf,d,Ti,Sf,Si,Ft,It}) where {Tf,d,Ti,Sf,Si,Ft,It}
+	Tf′ = Complex{real(Tf)}
+	Ft′ = FFTW.cFFTWPlan{Tf′,-1, false, d}
+	It′ = FFTW.cFFTWPlan{Ti , 1, false, d}
 	return plan(
-		Complex{real(T_forward_arg)}, 
+		Tf′, 
 		SizeInt{p.sz_forward_arg}, 
 		RegionBool{p.region}, 
 		p.scale_forward
-	)
+	)::FFT{Tf′,d,Ti,Sf,Si,Ft′,It′}
 end 
 
 
@@ -295,16 +247,40 @@ end
 
 Base.:*(w::𝕎{T,d}, s::S) where {d,T,S} = plan(w, s)
 
-function plan(w::𝕎{T,d}, s::S) where {d,T,S} 
-	return plan(T,SizeInt{w.sz},RegionBool{w.region},s)
-end 
-
 plan(w::𝕎{T,d}) where {T,d} = plan(w::𝕎{T,d}, true) 
 
 function unitary_plan(w::𝕎{T,d}) where {T,d}
 	s = prod(1/√i[1] for i in zip(w.sz,w.region) if i[2])
 	return plan(w, s)
 end
+
+
+function plan(w::𝕎{Tf,d}, s::S) where {d,Tf,S} 
+	real(T_forward_arg)
+	return plan(T,SizeInt{w.sz},RegionBool{w.region},s)
+end 
+
+
+# fixme: Getting type stability is hard here. 
+
+function plan(w::𝕎{Tf,d}, s::Sf) where {d,Tf<:FFTWReal,Sf} 
+	Ti = Complex{Tf}
+	Si = promote_type(Tf, Sf)
+	Ft = FFTW.rFFTWPlan{Tf,-1,false,d}
+	It = FFTW.rFFTWPlan{Ti,1, false,d}
+	rtn_type = FFT{Tf,d,Ti,Sf,Si,Ft,It}
+	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},s)::rtn_type
+end 
+
+function plan(w::𝕎{Tf,d}, s::Sf) where {d,Tf<:FFTWComplex,Sf} 
+	Ti = Tf
+	Si = promote_type(real(Tf), Sf)
+	Ft = FFTW.cFFTWPlan{Tf,-1,false,d}
+	It = FFTW.cFFTWPlan{Ti,1, false,d}
+	rtn_type = FFT{Tf,d,Ti,Sf,Si,Ft,It}
+	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},s)::rtn_type
+end 
+
 
 
 end
