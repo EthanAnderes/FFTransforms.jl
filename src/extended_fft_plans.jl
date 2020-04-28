@@ -55,20 +55,23 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 	d          = length(sz_forward_arg)
 	region_tp  = tuple(findall(region)...)
 	X          = Array{T_forward_arg,d}(undef, sz_forward_arg...) 
+	flags      = FFTW.ESTIMATE #fixme: the other ones don't seem to work here 
+	timelim    = 10.0
 
 	if T_forward_arg <: FFTWReal
 		
-		unscaled_forward_transform = plan_rfft(X, region_tp; flags=FFTW.ESTIMATE) 
-		Y = unscaled_forward_transform * X
-		unscaled_inverse_transform = plan_brfft(Y, sz_forward_arg[region_tp[1]], region_tp; flags=FFTW.ESTIMATE) 
+		T_backward_arg = Complex{T_forward_arg}
 		sz_inverse_arg = tuple(FFTW.rfft_output_size(X, region_tp)...)
+		Y = Array{T_backward_arg,d}(undef, sz_inverse_arg...)
+		unscaled_forward_transform = FFTW.rFFTWPlan{T_forward_arg, -1,false,d}(X, Y, region_tp, flags, timelim)
+		unscaled_inverse_transform = FFTW.rFFTWPlan{T_backward_arg, 1,false,d}(Y, X, region_tp, flags, timelim)
 
 	elseif T_forward_arg <: FFTWComplex
 
-		unscaled_forward_transform = plan_fft(X, region_tp; flags=FFTW.ESTIMATE) 
-		Y = unscaled_forward_transform * X
-		unscaled_inverse_transform = plan_bfft(Y, region_tp; flags=FFTW.ESTIMATE) 
 		sz_inverse_arg = sz_forward_arg
+		Y = Array{T_forward_arg,d}(undef, sz_inverse_arg...)
+		unscaled_forward_transform = FFTW.cFFTWPlan{T_forward_arg,-1,false,d}(X, Y, region_tp, flags, timelim)
+		unscaled_inverse_transform = FFTW.cFFTWPlan{T_forward_arg, 1,false,d}(Y, X, region_tp, flags, timelim)
 
 	end
 

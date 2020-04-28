@@ -7,7 +7,7 @@ FF = FFTransforms
 @testset "plan and adjoint (low level)" begin
 
 	T_forward_arg  = (Float32, Float64, Complex{Float32}, Complex{Float64})
-	sz_forward_arg = ((8,7), (5,), (7,8,16), (14,4))
+	sz_forward_arg = ((1024,1024), (5,), (7,8,16), (14,4))
 	region         = ((false,true), (true,), (false,true,false), (true,false))
 	scale_forward =  (1, true, 1.0, 0.1f0)
 
