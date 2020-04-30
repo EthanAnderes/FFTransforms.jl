@@ -1,12 +1,8 @@
 
-
+# TODO: add impulse response iterators
 
 # features of the input output arrays to plan(w::𝕎)
 # ====================================
-
-@inline eltype_in(w::𝕎{Tf,d}) where {Tf,d}  = Tf
-
-@inline eltype_out(w::𝕎{Tf,d}) where {Tf,d} = Complex{real(Tf)}
 
 @inline size_in(w::𝕎) = w.sz
 
@@ -65,33 +61,38 @@ ordinary_scale(w::𝕎{Tf,d}) where {Tf,d} = Ωx(w) / ((2π)^(sum(w.region)/2))
 # low level 
 # -----------
 
-function pix(n::Int, p::Tp)::Vector{Tp} where Tp
+function pix(n::Int, p::Real)
     Δx = p/n
     x  = (0:n-1) * Δx |> collect
     return x 
 end
 
-function pix(n::NTuple{d,Int}, p::NTuple{d,Tp})::NTuple{d,Vector{Tp}} where {d,Tp}
-    return map(pix, n, p)
-end
 
 # main API
 # -----------
 
-pix(w::𝕎{Tf,d}) where {d,Tf} = pix(w.sz, w.period)
-
-
-function fullpix(i::Int, w::𝕎{Tf,d,Tsf,Tp})::Array{Tp,d}  where {Tf,d,Tsf,Tp}
-    xi     = pix(w, w.p)
-    xifull = zeros(Tp, w.sz)
-    for Ic ∈ CartesianIndices(xifull)
-        xifull[I] = getindex(xi[i], Ic.I[i])
-    end
-    return xifull
+function pix(w::𝕎{Tf,d}) where {d,Tf}
+    rTf = real(Tf)
+    return map(w.sz, w.period) do nᵢ, pᵢ
+        rTf.(pix(nᵢ, pᵢ))
+    end::NTuple{d,Array{rTf,1}}
 end
 
-function fullpix(w::𝕎{Tf,d,Tsi,Tp})::NTuple{d,Array{Tp,d}} where {Tf,d,Tsi,Tp}
-    return map(i->fullpix(i, w), tuple(1:d...))
+function fullpix(i::Int, w::𝕎{Tf,d,Tsf,Tp}) where {Tf,d,Tsf,Tp}
+    xi     = pix(w)[i]
+    rTf    = real(Tf)
+    xifull = zeros(rTf, w.sz)
+    for Ic ∈ CartesianIndices(xifull)
+        xifull[Ic] = getindex(xi, Tuple(Ic)[i])
+    end
+    return xifull::Array{rTf,d}
+end
+
+function fullpix(w::𝕎{Tf,d,Tsi,Tp}) where {Tf,d,Tsi,Tp}
+    rTf = real(Tf)
+    return map(tuple(1:d...)) do i 
+        fullpix(i, w) 
+    end::NTuple{d,Array{rTf,d}}
 end
 
 
@@ -101,64 +102,60 @@ end
 # low level 
 # -----------
 
-function freq(n::Int, p::Tp)::Vector{Tp} where Tp
-    Δx   = p/n
-    Δk   = 2π/p
-    nyq  = 2π/(2Δx)
+function freq(n::Int, p::Real)
     k    = _fft_output_index_2_freq.(1:n, n, p)
     return k
 end
 
-function freq(n::NTuple{d,Int}, p::NTuple{d,Tp}, region::NTuple{d,Bool}) where {d,Tp}
-    k = map(n, p, region) do nᵢ, pᵢ, rᵢ
-        rᵢ ? freq(nᵢ, pᵢ) : pix(nᵢ, pᵢ) 
-    end 
-    return k::NTuple{d,Vector{Tp}}
-end
-
-
-function rfreq(n::Int, p::Tp)::Vector{Tp} where Tp
+function rfreq(n::Int, p::Tp) where Tp
     freq(n, p)[1:(n÷2+1)]
-end
-
-
-function rfreq(n::NTuple{d,Int}, p::NTuple{d,Tp}, region::NTuple{d,Bool}) where {d,Tp}
-    ir = findfirst(region)
-    k  =  map(n, p, region, tuple(1:d...)) do nᵢ, pᵢ, rᵢ, i
-        i==ir ? rfreq(nᵢ, pᵢ) : 
-        rᵢ    ? freq(nᵢ, pᵢ)  : pix(nᵢ, pᵢ) 
-    end
-    return k::NTuple{d,Vector{Tp}}
 end
 
 
 # main API
 # -----------
 
-freq(w::𝕎{Tf,d}) where {d, Tf<:FFTR} = rfreq(w.sz, w.p, w.region)
+function freq(w::𝕎{Tf,d}) where {d, Tf<:FFTC}
+    rTf = real(Tf)
+    return map(w.sz, w.period, w.region) do nᵢ, pᵢ, rᵢ
+        kᵢ = rᵢ ? freq(nᵢ, pᵢ) : pix(nᵢ, pᵢ) 
+        rTf.(kᵢ)
+    end::NTuple{d,Array{rTf,1}}
+end
 
-freq(w::𝕎{Tf,d}) where {d, Tf<:FFTC} = freq(w.sz, w.p, w.region)
+function freq(w::𝕎{Tf,d}) where {d, Tf<:FFTR}
+    ir = findfirst(w.region)
+    return map(w.sz, w.period, w.region, tuple(1:d...)) do nᵢ, pᵢ, rᵢ, i
+        kᵢ = (i==ir) ? rfreq(nᵢ, pᵢ) : 
+                  rᵢ ?  freq(nᵢ, pᵢ) : pix(nᵢ, pᵢ)
+        Tf.(kᵢ)
+    end::NTuple{d,Array{Tf,1}}
+end
 
 function fullfreq(i::Int, w::𝕎{Tf,d,Tsf,Tp}) where {Tf,d,Tsf,Tp}
     ki  = freq(w)[i]
-    kifull = zeros(Tp, size_out(w))
+    rTf = real(Tf)
+    kifull = zeros(rTf, size_out(w))
     for Ic ∈ CartesianIndices(kifull)
-        kifull[I] = getindex(ki, Ic.I[i])
+        kifull[Ic] = getindex(ki, Tuple(Ic)[i])
     end
-    return kifull
+    return kifull::Array{rTf,d}
 end
 
 function fullfreq(w::𝕎{Tf,d,Tsf,Tp}) where {Tf,d,Tsf,Tp}
-    map(i->fullfreq(i,w,p), tuple(1:d...))::NTuple{d,Array{Tp,d}}
+    return map(tuple(1:d...)) do i
+        fullfreq(i,w)
+    end::NTuple{d,Array{real(Tf),d}}
 end
 
 function wavenum(w::𝕎{Tf,d,Tsf,Tp}) where {Tf,d,Tsf,Tp}
-    k  = freq(w)
-    λ  = zeros(Tp, size_out(w))
+    k   = freq(w)
+    rTf = real(Tf)
+    λ   = zeros(rTf, size_out(w))
     for Ic ∈ CartesianIndices(λ)
-        λ[I] = sqrt(sum(abs2, getindex.(k,Ic.I)))
+        λ[Ic] = sqrt(sum(abs2, getindex.(k,Tuple(Ic))))
     end
-    return λ
+    return λ::Array{rTf,d}
 end
 
 

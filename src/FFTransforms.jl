@@ -28,7 +28,7 @@ Plan{T,d} = Union{
 # ---------------------------------
 	
 include("extended_fft_plans.jl")
-export plan, unitary_plan, FFT, AdjointFFT
+export plan, FFTplan, AdjointFFTplan
 
 include("w_kron_id.jl")
 export	𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗,
