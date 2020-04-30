@@ -44,7 +44,6 @@ struct SizeInt{sz} end #e.g. (512,1024,2,4)#
 
 struct RegionBool{rg} end #e.g. (false,true,false,true)#
 
-
 @generated function plan(
 		::Type{T_forward_arg}, 
 		::Type{SizeInt{sz_forward_arg}}, 
@@ -78,8 +77,8 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 	ifft_normalization = FFTW.normalization(real(T_forward_arg), sz_forward_arg, region_tp)
 
 	return quote
-        $(Expr(:meta, :inline))
-        FFT{$T_forward_arg, $d}(
+ 	       $(Expr(:meta, :inline))
+ 	       FFT{$T_forward_arg, $d}(
 			$unscaled_forward_transform,
 			$unscaled_inverse_transform,
 			scale_forward,	
@@ -88,7 +87,7 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 		    $sz_inverse_arg,
 			$region,	
 		)
-    end
+ 	end
 end  
 
 function Base.adjoint(p::FFT) 
