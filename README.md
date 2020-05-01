@@ -2,8 +2,20 @@
 
 
 
-struct FT{Tf,nᵢ,rᵢ,d} <: Transform{T,d} end
-     pᵢ
+𝕎{Tf,d,Tsf,Tp} <: 𝔽{Tf,d}
+ℍ{Tf,d} <: 𝔽{Tf,d}
+
+# with these defined 
+    In general with ft isa 𝔽{Tf,d}
+    size_in(ft)
+    size_out(ft)
+    eltype_in(ft)
+    eltype_out(ft)
+    plan(ft) * rand(eltype_in(ft), size_in(ft))
+    plan(ft) \ rand(eltype_out(ft), size_out(ft))
+
+
+    Ωx(F) -> for generating white noise (grid side of the form [1,2,3,4] just contributes 1* to the Ωx )
 
 
 The type must have the form Transform{Tf,To,szi,szo,...}

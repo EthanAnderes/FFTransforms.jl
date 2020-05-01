@@ -8,24 +8,6 @@
 # plans via kron's of FFTs and Identity operators
 # ================================================
 
-# The following structs allow lazy construction of an fft plan.
-# Mixing 𝕀 and 𝕎 with ⊗ creates another 𝕎 (or 𝕀) untill 
-# passed to the plan method
-
-# 𝕎 holds sz (size of the input array) 
-# and region (which determines which axes get FFT'd)
-# --------------------------
-struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real}
-	sz::NTuple{d,Int} 
-	region::NTuple{d,Bool}
-	scale::Tsf 
-	period::NTuple{d,Tp}
-
-	function 𝕎{Tf,d}(sz::NTuple{d,Int}, rg::NTuple{d,Bool}, sc::Tsf, pd::NTuple{d,Tp}) where {Tf<:FFTN,d,Tsf,Tp}
-		new{Tf,d,Tsf,Tp}(sz,rg,sc,pd)
-	end
-end 
-
 
 # Construct directly from 𝕎{Tf}(sz,rg,sc,pd) or 
 # alternatively with a kron of scale * 1-d 𝕎 
