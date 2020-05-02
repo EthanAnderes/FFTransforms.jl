@@ -1,11 +1,10 @@
 module FFTransforms
 
 using Reexport
+@reexport using LinearAlgebra
 @reexport using FFTW
 using AbstractFFTs
-using LinearAlgebra
-
-using  XFields 
+using XFields: Transform
 import XFields: plan, size_in, size_out, eltype_in, eltype_out
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
