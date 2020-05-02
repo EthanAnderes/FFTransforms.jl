@@ -1,17 +1,10 @@
 
 
-# Adds a lightweight layer between a container for concrete plan and the inputs 
-# to the planning methods. 
-# This allows one to easily store 𝕎 as an field in an array type 
-# wrapper. 
-
 # plans via kron's of FFTs and Identity operators
 # ================================================
 
-
 # Construct directly from 𝕎{Tf}(sz,rg,sc,pd) or 
 # alternatively with a kron of scale * 1-d 𝕎 
-
 
 𝕎(::Type{Tf}, sz::Int)          where Tf<:FFTN = 𝕎{Tf,1}((sz,), (true,), true, (sz,))
 𝕎(::Type{Tf}, sz::Int, p::Real) where Tf<:FFTN = 𝕎{Tf,1}((sz,), (true,), true, (p,))
@@ -101,35 +94,6 @@ end
 function complex𝕎(w::𝕎{Tf,d}) where {Tf,d}
 	return 𝕎{Complex{real(Tf)},d}(w.sz, w.region, w.scale, w.period)
 end
-
-
-# obtaining a planned FFT from 𝕎 
-# ===========================================
-
-# fixme: Getting type stability is hard here. 
-
-@inline eltype_in(w::𝕎{Tf,d}) where {Tf,d}  = Tf
-
-@inline eltype_out(w::𝕎{Tf,d}) where {Tf,d} = Complex{real(Tf)}
-
-function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTR,Tsf} 
-	Ti   = Complex{Tf}
-	Tsi  = promote_type(Tf, Tsf) 
-	FT   = FFTW.rFFTWPlan{Tf,-1,false,d}
-	IT   = FFTW.rFFTWPlan{Ti,1, false,d}
-	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
-	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
-end 
-
-function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTC,Tsf} 
-	Ti  = Tf
-	Tsi = promote_type(real(Tf), Tsf) 
-	FT = FFTW.cFFTWPlan{Tf,-1,false,d}
-	IT = FFTW.cFFTWPlan{Ti,1, false,d}
-	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
-	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
-end 
-
 
 
 

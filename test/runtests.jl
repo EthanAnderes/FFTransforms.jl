@@ -82,23 +82,30 @@ FF = FFTransforms
 	rP = @inferred plan(rW)
 	cP = @inferred plan(cW)
 
+	X  = rand(eltype_in(W), size_in(W))
+	sX = rand(eltype_in(sW), size_in(sW))
+	uX = rand(eltype_in(uW), size_in(uW))
+	oX = rand(eltype_in(oW), size_in(oW))
+	X′ = rand(eltype_in(W′), size_in(W′))
+	rX = rand(eltype_in(rW), size_in(rW))
+	cX = rand(eltype_in(cW), size_in(cW))
 
-	Pout  = P  * rand(eltype_in(W), size_in(W))
-	sPout = sP * rand(eltype_in(sW), size_in(sW))
-	uPout = uP * rand(eltype_in(uW), size_in(uW))
-	oPout = oP * rand(eltype_in(oW), size_in(oW))
-	P′out = P′ * rand(eltype_in(W′), size_in(W′))
-	rPout = rP * rand(eltype_in(rW), size_in(rW))
-	cPout = cP * rand(eltype_in(cW), size_in(cW))
 
-	P  \ Pout 
-	sP \ sPout
-	uP \ uPout
-	oP \ oPout
-	P′ \ P′out
-	rP \ rPout
-	cP \ cPout
+	Pout  = @inferred P  * X  
+	sPout = @inferred sP * sX
+	uPout = @inferred uP * uX
+	oPout = @inferred oP * oX
+	P′out = @inferred P′ * X′
+	rPout = @inferred rP * rX
+	cPout = @inferred cP * cX
 
+	@test sum(abs2, X  - P  \ Pout ) ./ length(X ) ≈ 0 atol = 1e-7
+	@test sum(abs2, sX - sP \ sPout) ./ length(sX) ≈ 0 atol = 1e-7
+	@test sum(abs2, uX - uP \ uPout) ./ length(uX) ≈ 0 atol = 1e-7
+	@test sum(abs2, oX - oP \ oPout) ./ length(oX) ≈ 0 atol = 1e-7
+	@test sum(abs2, X′ - P′ \ P′out) ./ length(X′) ≈ 0 atol = 1e-7
+	@test sum(abs2, rX - rP \ rPout) ./ length(rX) ≈ 0 atol = 1e-7
+	@test sum(abs2, cX - cP \ cPout) ./ length(cX) ≈ 0 atol = 1e-7
 
 end
 
@@ -141,50 +148,4 @@ end
 
 end
 
-
-
-
-
-
-# @testset "𝕀, ⊗, 𝕎, 𝕎32 and r𝕎, r𝕎32" begin
-
-# 	n₁, n₂, n₃, n₄ = 12, 10, 256, 2
-	
-# 	W1 = 𝕀(n₁)
-# 	W2 = 𝕀(n₁) ⊗ r𝕎(n₂)
-# 	W3 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃)
-# 	W4 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄)
-# 	W5 = 𝕀(n₁, n₂)   ⊗ 𝕎(n₃)
-# 	W6 = r𝕎(n₁,n₂)  ⊗ 𝕀(n₃,n₄)
-
-# 	FT1 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true
-# 	FT2 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * 10.0
-# 	FT3 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * 2
-# 	FT4 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) |> unitary_plan
-# 	FT5 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) |> plan
-# 	FT6 = 𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) |> plan |> adjoint
-# 	FT7 = FT5'
-# 	FT8 = plan(r𝕎(n₁, n₂) ⊗ 𝕀(n₃, n₄))'
-# 	@inferred plan(r𝕎32(n₁, n₂) ⊗ 𝕀(n₃, n₄))
-
-# 	X = rand(Float64, n₁, n₂, n₃, n₄)
-
-
-# 	for FT ∈ (FT1, FT2, FT3, FT4, FT5)
-# 		@inferred FT \ (FT * X)
-# 	end
-
-# 	for FT ∈ (FT6, FT7, FT8)
-# 		@test FT' isa FFT
-# 		Y = FT' * X
-# 		@inferred FT \ (FT * Y)
-# 	end
-
-# 	@inferred complex(𝕀(n₁) ⊗ r𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
-# 	@inferred real(𝕀(n₁) ⊗ 𝕎(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
-
-# 	@inferred complex(𝕀(n₁) ⊗ r𝕎32(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
-# 	@inferred real(𝕀(n₁) ⊗ 𝕎32(n₂) ⊗ 𝕀(n₃) ⊗ 𝕎(n₄) * true)
-
-# end
 

@@ -5,19 +5,11 @@ using Reexport
 using AbstractFFTs
 using LinearAlgebra
 
-#TODO change to XFields once ready
-using CMBrings 
-import CMBrings: plan, size_in, size_out, eltype_in, eltype_out, Ωx
-
-
-
-
-# import Base: +, -, *, ^, \, sqrt, getindex, promote_rule, convert, show, inv, transpose
-# import LinearAlgebra: dot, adjoint, diag, \
+using  XFields 
+import XFields: plan, size_in, size_out, eltype_in, eltype_out
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
-# Aliases for FFTW eltypes
 C64 = Complex{Float64}
 C32 = Complex{Float32}
 F64 = Float64
@@ -34,13 +26,13 @@ Plan{T,d} = Union{
  	FFTW.rFFTWPlan{T,1,false,d}
 }
 
-# The following structs allow lazy construction of an fft plan.
-# Mixing 𝕀 and 𝕎 with ⊗ creates another 𝕎 (or 𝕀) untill 
-# passed to the plan method
+# ft::𝕎{Tf,d,...} <: Transform{Tf,d}
+# =========================================
+# Adds a lightweight layer between a container for concrete plan and the inputs 
+# to the planning methods. 
+# This allows one to easily store 𝕎 as an field in an array type 
+# wrapper. 
 
-# 𝕎 holds sz (size of the input array) 
-# and region (which determines which axes get FFT'd)
-# =====================================
 struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real} <: Transform{Tf,d}
 	sz::NTuple{d,Int} 
 	region::NTuple{d,Bool}
@@ -53,23 +45,81 @@ struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real} <: Transform{Tf,d}
 end 
 
 
-include("extended_fft_plans.jl")
-export plan, FFTplan, AdjointFFTplan, 
-		eltype_in, eltype_out
+# Required methods to hook into XFields ...
+# ==========================================
+# For any  ft::𝕎{Tf,d,...} <: Transform{Tf,d}
+# to hook into XFields we need these defined ...
+#  • size_in(ft)
+#  • size_out(ft)
+#  • eltype_in(ft)
+#  • eltype_out(ft)
+#  • plan(ft) * rand(eltype_in(ft), size_in(ft))
+#  • plan(ft) \ rand(eltype_out(ft), size_out(ft))
 
+export size_in, size_out, eltype_in, eltype_out, plan,
+		FFTplan, AdjointFFTplan
 
-include("w_kron_id.jl")
-export	𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗,
-		unscale𝕎, real𝕎, complex𝕎
+## size_in and size_out
+@inline size_in(w::𝕎) = w.sz
 
-#TODO: incorperate the above into a file for include so this 
+size_out(w::𝕎{Tf}) where {Tf<:FFTC} = w.sz
+
+function size_out(w::𝕎{Tf,d})::NTuple{d,Int} where {Tf<:FFTR,d}
+    ir = findfirst(w.region)
+    return map(w.sz, tuple(1:d...)) do nᵢ, i
+        i==ir ? nᵢ÷2+1 : nᵢ
+    end
+end
+
+## eltype_in and eltype_out
+@inline eltype_in(w::𝕎{Tf,d}) where {Tf,d}  = Tf
+
+@inline eltype_out(w::𝕎{Tf,d}) where {Tf,d} = Complex{real(Tf)}
+
+## plan 
+include("plan_fft.jl")
+
+function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTR,Tsf} 
+	Ti   = Complex{Tf}
+	Tsi  = promote_type(Tf, Tsf) 
+	FT   = FFTW.rFFTWPlan{Tf,-1,false,d}
+	IT   = FFTW.rFFTWPlan{Ti,1, false,d}
+	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
+	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
+end 
+
+function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTC,Tsf} 
+	Ti  = Tf
+	Tsi = promote_type(real(Tf), Tsf) 
+	FT = FFTW.cFFTWPlan{Tf,-1,false,d}
+	IT = FFTW.cFFTWPlan{Ti,1, false,d}
+	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
+	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
+end 
+
+## Extra grid information available
+# =====================================
+# TODO: incorperate the above into a file for include so this 
 # fits better in the code
-include("xkgrids.jl")
-export	size_in, size_out, eltype_in, eltype_out,
-		Δpix, Δfreq, nyq, Ωx, Ωk, 
+
+include("grid.jl")
+
+export	Δpix, Δfreq, nyq, Ωx, Ωk, 
 		inv_scale, unitary_scale, ordinary_scale,
 		pix, freq, fullpix, fullfreq, wavenum
 
+#TODO: incorperate get_rFFTimpulses
+
+
+## Extra convienent constructors
+# =====================================
+# The following structs allow lazy construction of an fft plan.
+# Mixing 𝕀 and 𝕎 with ⊗ creates another 𝕎 (or 𝕀) untill 
+# passed to the plan method
+
+include("constructors.jl")
+
+export	𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗, unscale𝕎, real𝕎, complex𝕎
 
 
 end # Module

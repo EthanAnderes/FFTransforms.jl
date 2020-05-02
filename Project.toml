@@ -5,10 +5,10 @@ version = "0.1.0"
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
-CMBrings = "06da25b7-e766-422a-ba3a-f19fac445ada"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+XFields = "6b266097-e72c-4055-8154-82a0a0b3a8e0"
 
 [compat]
 julia = "1.3"

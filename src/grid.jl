@@ -4,17 +4,6 @@
 # features of the input output arrays to plan(w::𝕎)
 # ====================================
 
-@inline size_in(w::𝕎) = w.sz
-
-size_out(w::𝕎{Tf}) where {Tf<:FFTC} = w.sz
-
-function size_out(w::𝕎{Tf,d})::NTuple{d,Int} where {Tf<:FFTR,d}
-    ir = findfirst(w.region)
-    return map(w.sz, tuple(1:d...)) do nᵢ, i
-        i==ir ? nᵢ÷2+1 : nᵢ
-    end
-end
-
 
 # features of the grid from w.period
 # =================================
@@ -179,4 +168,52 @@ function _fft_output_index_2_freq(ind, nside, period)
     # return ifelse(kpre < nyq, kpre, kpre - 2nyq)  # option 2
 end
 
+# function _get_npd(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)
+#     @assert !(isnothing(pᵢ) & isnothing(Δxᵢ)) "either pᵢ or Δxᵢ needs to be specified (note: pᵢ = Δxᵢ .* nᵢ)"
+#     d = length(nᵢ)
+#     if isnothing(pᵢ)
+#         @assert d == length(Δxᵢ) "Δxᵢ and nᵢ need to be tuples of the same length"
+#         pᵢ = tuple((prod(xn) for xn in zip(Δxᵢ,nᵢ))...)
+#     end
+#     @assert d == length(pᵢ) "pᵢ and nᵢ need to be tuples of the same length"
+#     nᵢ, pᵢ, d
+# end
+
+
+
+# #%% Used for constructing the covariance matrix of a subset of frequencies
+# function get_rFFTimpulses(::Type{F}) where {T,nᵢ,pᵢ,dnᵢ,F<:rFFTgeneric{T,nᵢ,pᵢ,dnᵢ}}
+#     g  = Grid(F)
+#     CI = CartesianIndices(Base.OneTo.(g.nki))
+#     LI = LinearIndices(Base.OneTo.(g.nki))
+
+#     function _get_dual_k(k,n) 
+#         dk = n-k+2
+#         mod1(dk,n)
+#     end 
+
+#     function get_dual_ci(ci::CartesianIndex{dnᵢ}) 
+#         return CartesianIndex(map(_get_dual_k, ci.I, g.nxi))
+#     end 
+
+#     function rFFTimpulses(ci::CartesianIndex{dnᵢ})
+#         rimpls = zeros(Complex{T}, g.nki...)
+#         cimpls = zeros(Complex{T}, g.nki...)
+#         dual_ci = get_dual_ci(ci)
+#         if (ci==first(CI)) || (ci==dual_ci)
+#             rimpls[ci]  = 1
+#         elseif dual_ci ∈ CI
+#             rimpls[ci]  = 1/2
+#             cimpls[ci]  = im/2
+#             rimpls[dual_ci]  =  1/2
+#             cimpls[dual_ci]  = -im/2
+#         else
+#             rimpls[ci]  = 1/2
+#             cimpls[ci]  = im/2
+#         end
+#         return rimpls, cimpls
+#     end
+
+#     return rFFTimpulses, CI, LI, get_dual_ci
+# end
 
