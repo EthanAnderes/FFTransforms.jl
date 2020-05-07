@@ -3,11 +3,21 @@
 # plans via kron's of FFTs and Identity operators
 # ================================================
 
-# Construct directly from 𝕎{Tf}(sz,rg,sc,pd) or 
-# alternatively with a kron of scale * 1-d 𝕎 
+# 2 construction options
+#	• Construct directly from 𝕎{Tf}(sz,rg,sc,pd)  
+# 	• via kron of 𝕀 and 𝕎 
 
-𝕎(::Type{Tf}, sz::Int)          where Tf<:FFTN = 𝕎{Tf,1}((sz,), (true,), true, (sz,))
+𝕎(::Type{Tf}, sz::Int) where Tf<:FFTN  = 𝕎{Tf,1}((sz,), (true,), true, (sz,))
 𝕎(::Type{Tf}, sz::Int, p::Real) where Tf<:FFTN = 𝕎{Tf,1}((sz,), (true,), true, (p,))
+
+#TODO add a test for these
+function 𝕎(::Type{Tf}, sz::NTuple{d,Int}) where {Tf<:FFTN, d} 
+	return 𝕎{Tf,d}(sz, tuple(trues(d)...), true, sz)
+end
+function 𝕎(::Type{Tf}, sz::NTuple{d,Int}, p::NTuple{d,Tp}) where {Tf<:FFTN, d, Tp<:Real}
+	return 𝕎{Tf,d}(sz, tuple(trues(d)...), true, p)
+end
+
 
 𝕎(sz::Int) = 𝕎(C64, sz)
 𝕎(sz::Int, p::Real) = 𝕎(C64, sz, p)

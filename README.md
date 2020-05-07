@@ -1,6 +1,17 @@
 # FFTransforms
 
 
+Under construction ...
+
+(Note this package defines 𝕎 which is `\BbbW<tab-complete>` in sublime but is `\bbW<tab-complete>`
+in the julia REPL)
+
+
+
+
+
+
+
 
 𝕎{Tf,d,Tsf,Tp} <: 𝔽{Tf,d}
 ℍ{Tf,d} <: 𝔽{Tf,d}

@@ -1,8 +1,8 @@
 module FFTransforms
 
 using Reexport
-@reexport using LinearAlgebra
-@reexport using FFTW
+using LinearAlgebra
+using FFTW
 using AbstractFFTs
 using XFields: Transform
 import XFields: plan, size_in, size_out, eltype_in, eltype_out
@@ -27,8 +27,8 @@ Plan{T,d} = Union{
 
 # ft::𝕎{Tf,d,...} <: Transform{Tf,d}
 # =========================================
-# Adds a lightweight layer between a container for concrete plan and the inputs 
-# to the planning methods. 
+# Adds a lightweight layer between a container for concrete plan 
+# and the inputs to the planning methods. 
 # This allows one to easily store 𝕎 as an field in an array type 
 # wrapper. 
 
