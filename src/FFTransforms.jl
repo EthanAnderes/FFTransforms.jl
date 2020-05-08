@@ -37,28 +37,11 @@ struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real} <: Transform{Tf,d}
 	region::NTuple{d,Bool}
 	scale::Tsf 
 	period::NTuple{d,Tp}
-
 	function 𝕎{Tf,d}(sz::NTuple{d,Int}, rg::NTuple{d,Bool}, sc::Tsf, pd::NTuple{d,Tp}) where {Tf<:FFTN,d,Tsf,Tp}
 		new{Tf,d,Tsf,Tp}(sz,rg,sc,pd)
 	end
 end 
 
-
-# Required methods to hook into XFields ...
-# ==========================================
-# For any  ft::𝕎{Tf,d,...} <: Transform{Tf,d}
-# to hook into XFields we need these defined ...
-#  • size_in(ft)
-#  • size_out(ft)
-#  • eltype_in(ft)
-#  • eltype_out(ft)
-#  • plan(ft) * rand(eltype_in(ft), size_in(ft))
-#  • plan(ft) \ rand(eltype_out(ft), size_out(ft))
-
-export size_in, size_out, eltype_in, eltype_out, plan,
-		FFTplan, AdjointFFTplan
-
-## size_in and size_out
 @inline size_in(w::𝕎) = w.sz
 
 size_out(w::𝕎{Tf}) where {Tf<:FFTC} = w.sz
@@ -70,12 +53,10 @@ function size_out(w::𝕎{Tf,d})::NTuple{d,Int} where {Tf<:FFTR,d}
     end
 end
 
-## eltype_in and eltype_out
 @inline eltype_in(w::𝕎{Tf,d}) where {Tf,d}  = Tf
 
 @inline eltype_out(w::𝕎{Tf,d}) where {Tf,d} = Complex{real(Tf)}
 
-## plan 
 include("plan_fft.jl")
 
 function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTR,Tsf} 
@@ -95,6 +76,9 @@ function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTC,Tsf}
 	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
 	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
 end 
+
+export size_in, size_out, eltype_in, eltype_out, plan, FFTplan, AdjointFFTplan
+
 
 ## Extra grid information available
 # =====================================
