@@ -18,11 +18,11 @@ FFTR = Union{F32,F64}
 FFTC = Union{C32,C64}
 FFTN = Union{FFTR, FFTC}
 
-Plan{T,d} = Union{
-	FFTW.cFFTWPlan{T,-1,false,d},
- 	FFTW.rFFTWPlan{T,-1,false,d},
-	FFTW.cFFTWPlan{T,1,false,d},
- 	FFTW.rFFTWPlan{T,1,false,d}
+Plan{T,d,G} = Union{
+	FFTW.cFFTWPlan{T,-1,false,d,G},
+ 	FFTW.rFFTWPlan{T,-1,false,d,G},
+	FFTW.cFFTWPlan{T,1,false,d,G},
+ 	FFTW.rFFTWPlan{T,1,false,d,G}
 }
 
 # ft::𝕎{Tf,d,...} <: Transform{Tf,d}
