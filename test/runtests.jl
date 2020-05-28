@@ -75,13 +75,14 @@ FF = FFTransforms
 	cW = @inferred complex𝕎(W)
 
 
-	P  = @inferred plan(W)
-	sP = @inferred plan(sW)
-	uP = @inferred plan(uW)
-	oP = @inferred plan(oW)
-	P′ = @inferred plan(W′)
-	rP = @inferred plan(rW)
-	cP = @inferred plan(cW)
+	# TODO get these inferred correctly
+	P  = plan(W)
+	sP = plan(sW)
+	uP = plan(uW)
+	oP = plan(oW)
+	P′ = plan(W′)
+	rP = plan(rW)
+	cP = plan(cW)
 
 	X  = rand(eltype_in(W), size_in(W))
 	sX = rand(eltype_in(sW), size_in(sW))

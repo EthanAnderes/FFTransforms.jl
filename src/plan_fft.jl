@@ -126,8 +126,9 @@ end
 
 function Base.real(p::FFTplan{Tf,d,Ti,Sf,Si,FT,IT}) where {Tf,d,Ti,Sf,Si,FT,IT}
 	Tf′ = real(Tf)
-	FT′ = FFTW.rFFTWPlan{Tf′,-1, false, d}
-	IT′ = FFTW.rFFTWPlan{Ti , 1, false, d}
+	G    = NTuple{sum(p.region),Int} 
+	FT′ = FFTW.rFFTWPlan{Tf′,-1, false, d, G}
+	IT′ = FFTW.rFFTWPlan{Ti , 1, false, d, G}
 	return plan(
 		Tf′, 
 		SizeInt{p.sz_forward_arg}, 
@@ -138,8 +139,9 @@ end
 
 function Base.complex(p::FFTplan{Tf,d,Ti,Sf,Si,FT,IT}) where {Tf,d,Ti,Sf,Si,FT,IT}
 	Tf′ = Complex{real(Tf)}
-	FT′ = FFTW.cFFTWPlan{Tf′,-1, false, d}
-	IT′ = FFTW.cFFTWPlan{Ti , 1, false, d}
+	G   = NTuple{sum(p.region),Int} 
+	FT′ = FFTW.cFFTWPlan{Tf′,-1, false, d, G}
+	IT′ = FFTW.cFFTWPlan{Ti , 1, false, d, G}
 	return plan(
 		Tf′, 
 		SizeInt{p.sz_forward_arg}, 

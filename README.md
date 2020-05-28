@@ -27,3 +27,7 @@ end
 
 
 Note: if the transform requires custom methods to convert Map <-> Fourier then one can simply define `plan(nT::NewTransform) = nT` and follow up with overloading `*(nT,<storage>)` and `*(nT,<storage>)` for  `nT::NewTransform`.
+
+
+
+* Note for FFTransforms: it appears you need a constructor that follows exactly the standard constructor but checks the fields ...

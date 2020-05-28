@@ -61,20 +61,22 @@ include("plan_fft.jl")
 
 function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTR,Tsf} 
 	Ti   = Complex{Tf}
-	Tsi  = promote_type(Tf, Tsf) 
-	FT   = FFTW.rFFTWPlan{Tf,-1,false,d}
-	IT   = FFTW.rFFTWPlan{Ti,1, false,d}
-	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
-	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
+	Tsi  = promote_type(Tf, Tsf)
+	# G    = NTuple{sum(w.region),Int} 
+	# FT   = FFTW.rFFTWPlan{Tf,-1,false,d,G}
+	# IT   = FFTW.rFFTWPlan{Ti, 1,false,d,G}
+	# rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
+	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::FFTplan{Tf,d,Ti,Tsf,Tsi}
 end 
 
 function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTC,Tsf} 
 	Ti  = Tf
-	Tsi = promote_type(real(Tf), Tsf) 
-	FT = FFTW.cFFTWPlan{Tf,-1,false,d}
-	IT = FFTW.cFFTWPlan{Ti,1, false,d}
-	rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
-	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::rtn_type
+	Tsi = promote_type(real(Tf), Tsf)
+	# G  = NTuple{sum(w.region),Int}
+	# FT = FFTW.cFFTWPlan{Tf,-1,false,d,G}
+	# IT = FFTW.cFFTWPlan{Ti, 1,false,d,G}
+	# rtn_type = FFTplan{Tf,d,Ti,Tsf,Tsi,FT,IT}
+	return plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::FFTplan{Tf,d,Ti,Tsf,Tsi}
 end 
 
 export size_in, size_out, eltype_in, eltype_out, plan, FFTplan, AdjointFFTplan
