@@ -1,9 +1,14 @@
 # FFTransforms
 
-
 Under construction ...
 
+### FFT Transform type for XFields
+
+
 (Note this package defines 𝕎 which is `\BbbW<tab-complete>` in sublime but is `\bbW<tab-complete>`in the julia REPL)
+
+
+# Quick start
 
 
 
