@@ -1,9 +1,7 @@
 module FFTransforms
 
-using Reexport
 using LinearAlgebra
 using FFTW
-using AbstractFFTs
 using XFields: Transform
 import XFields: plan, size_in, size_out, eltype_in, eltype_out
 
