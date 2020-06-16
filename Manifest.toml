@@ -25,12 +25,6 @@ git-tree-sha1 = "6c975cd606128d45d1df432fb812d6eb10fee00b"
 uuid = "f5851436-0d7a-5f13-b9de-f02708fd171a"
 version = "3.3.9+5"
 
-[[FFTransforms]]
-deps = ["AbstractFFTs", "FFTW", "LinearAlgebra", "Reexport", "XFields"]
-path = "."
-uuid = "41ee4b3b-6d90-492a-9c4b-6a995b15ca9c"
-version = "0.1.0"
-
 [[IntelOpenMP_jll]]
 deps = ["Libdl", "Pkg"]
 git-tree-sha1 = "fb8e1c7a5594ba56f9011310790e03b5384998d6"
@@ -104,7 +98,9 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[XFields]]
-deps = ["FFTW", "FFTransforms", "LinearAlgebra", "Reexport"]
-path = "/Users/ethananderes/Dropbox/Fields/XFields"
+deps = ["FFTW", "LinearAlgebra", "Reexport"]
+git-tree-sha1 = "8d952d42512716a1ec9d80cf175a360a47818256"
+repo-rev = "master"
+repo-url = "https://github.com/EthanAnderes/XFields.jl"
 uuid = "6b266097-e72c-4055-8154-82a0a0b3a8e0"
 version = "0.1.0"
