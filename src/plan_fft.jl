@@ -95,7 +95,18 @@ end
 # Define how these plan holders operate
 # -------------------------------
 
-# TODO: add mul!, lmul! and rmul!
+function LinearAlgebra.mul!(y::Array{Ti,d}, p::FFTplan{Tf,d,Ti}, x::Array{Tf,d}) where {d,Tf,Ti}
+	mul!(y, p.unscaled_forward_transform, x)
+	rmul!(y, p.scale_forward)
+	return y
+end
+
+
+function LinearAlgebra.ldiv!(x::Array{Tf,d}, p::FFTplan{Tf,d,Ti}, y::Array{Ti,d}) where {d,Tf,Ti}
+	mul!(x, p.unscaled_inverse_transform, y)
+	rmul!(y, p.scale_inverse)
+	return y
+end
 
 
 function Base.:*(p::FFTplan{Tf,d}, x::Array{Tf,d}) where {d,Tf} 
