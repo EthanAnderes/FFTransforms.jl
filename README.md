@@ -2,13 +2,18 @@
 
 Under construction ...
 
+This package defines a type `𝕎{T, d, S, P}` which corresponds to a struct that holds enough information to completely specify a fast Fourier transform of an `Array{T, d}`. The type parameters `{T,d}` correspond to the input Array type parameters. The type parameters `S<:Number` and `P<:Real` correspond, respectively, to the storage type of the fft normalizing constant and the period of pixel coordinate region. Instances of `𝕎` are intended as lightweight objects that can be used for easily generating fast Fourier transform plans of arrays, or can be used with XFields. 
 
-(Note this package defines 𝕎 which is `\BbbW<tab-complete>` in sublime but is `\bbW<tab-complete>`in the julia REPL)
+`𝕎{T, d, S, P}` is a subtype of `Transform{T,d}`, from `XFields.jl`, and have the following methods predefined (the necessary interface methods for concrete subtypes of `Transform{T,d}`): 
+* `size_in(W::𝕎)` returns the size of the fft input.
+* `size_out(W::𝕎)` returns the size of the fft output.
+* `eltype_in(W::𝕎)` returns the eltype of the fft input.
+* `eltype_out(W::𝕎)`  returns the eltype of the fft output.
+* `plan(W::𝕎)`.
 
+The method `plan(W::𝕎)` returns a `pW::FFTplan` which does the actual fft forward/backward transforms on arrays via `*` abd `\`.
 
-## FFT `Transform{T,d}` type `𝕎{T, d, S, P}` for XFields
-
-Instances of `𝕎` hold enough information to completely specify a fast Fourier transform of an `Array{T, d}`. They are intended as lightweight objects that can be used as a stand alone lightweight object for easily generating fast Fourier transform plans of arrays, or can be used with XFields. 
+Besides providing a convenient constructor for fft plans this package also pre-defines some grid geometric information for each `W::𝕎`.  
 
 ### Quick start example 1
 
@@ -63,7 +68,7 @@ F = ordinary_scale(W) * W
 `F` operates on 4-dimensional real arrays `f` as the matrix operation that approximates
 
 ```julia
-plan(F)*f ≈ (x₁,k₂,k₃,x₄) -> ∫∫ exp(-√(-1)(k₂⋅x₂+k₃⋅x₃))f(x₁,x₂,x₃,x₄)dx₂dx₃/(2π)
+plan(F)*f ≈ ∫∫ exp(-√(-1)(k₂⋅x₂+k₃⋅x₃))f(x₁,x₂,x₃,x₄)dx₂dx₃/(2π)
 ```
 
 where the region of integration in the above integral is `[0,π]×[0,2π]`. In this case the function `Ωx(F) == (π/128) * (2π/16)` which approximates `dx₂dx₃` in the Riemann sum of the above integral.
@@ -77,23 +82,5 @@ f′  = pF \ g
 
 
 
-
-# Required methods to hook into XFields ...
-
-
-```
-struct NewTransform{Tf,d,...} <: Transform{Tf,d}
-    <any fields here necessary for determining the transform>
-end
-```
-
-* `size_in(nT::NewTransform) -> <size of the storage for the corresponding MapField>`
-* `size_out(nT::NewTransform) -> <size of the storage for the corresponding FourierField>`  
-* `eltype_in(nT::NewTransform) -> <eltype of the storage field of the corresponding Field>`
-* `eltype_out(nT::NewTransform) -> <eltype of the storage for the corresponding FourierField>`
-* `plan(nT::NewTransform) * <storage for the corresponding MapField>`
-* `plan(nT::NewTransform) \ <storage for the corresponding FourierField>`
-
-
-Note: if the transform requires custom methods to convert Map <-> Fourier then one can simply define `plan(nT::NewTransform) = nT` and follow up with overloading `*(nT,<storage>)` and `*(nT,<storage>)` for  `nT::NewTransform`.
+(Note this package defines 𝕎 which is `\BbbW<tab-complete>` in sublime but is `\bbW<tab-complete>`in the julia REPL)
 
