@@ -104,8 +104,8 @@ end
 
 function LinearAlgebra.ldiv!(x::Array{Tf,d}, p::FFTplan{Tf,d,Ti}, y::Array{Ti,d}) where {d,Tf,Ti}
 	mul!(x, p.unscaled_inverse_transform, y)
-	rmul!(y, p.scale_inverse)
-	return y
+	rmul!(x, p.scale_inverse)
+	return x
 end
 
 
