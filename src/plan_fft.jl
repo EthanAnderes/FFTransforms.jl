@@ -46,7 +46,7 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 	region_tp  = tuple(findall(region)...)
 	X          = Array{Tf,d}(undef, sz_forward_arg...) 
 	flags      = FFTW.ESTIMATE #fixme: the other ones don't seem to work here 
-	timelim    = 10.0
+	timelim    = 20.0
 
 	if Tf <: FFTR
 		
@@ -97,37 +97,50 @@ end
 
 function LinearAlgebra.mul!(y::Array{Ti,d}, p::FFTplan{Tf,d,Ti}, x::Array{Tf,d}) where {d,Tf,Ti}
 	mul!(y, p.unscaled_forward_transform, x)
-	rmul!(y, p.scale_forward)
+	## rmul!(y, p.scale_forward)
+	@inbounds y .*= p.scale_forward
 	return y
 end
 
 
 function LinearAlgebra.ldiv!(x::Array{Tf,d}, p::FFTplan{Tf,d,Ti}, y::Array{Ti,d}) where {d,Tf,Ti}
 	mul!(x, p.unscaled_inverse_transform, y)
-	rmul!(x, p.scale_inverse)
+	## rmul!(x, p.scale_inverse)
+	@inbounds x .*= p.scale_inverse
 	return x
 end
 
 
 function Base.:*(p::FFTplan{Tf,d}, x::Array{Tf,d}) where {d,Tf} 
-	return LinearAlgebra.rmul!(p.unscaled_forward_transform * x, p.scale_forward)
+	## return LinearAlgebra.rmul!(p.unscaled_forward_transform * x, p.scale_forward)
+	rtn = p.unscaled_forward_transform * x
+	@inbounds rtn .*= p.scale_forward
+	return rtn
 end
 
 
 function Base.:\(p::FFTplan{Tf,d,Ti}, y::Array{Ti,d}) where {d,Tf,Ti}
-	return LinearAlgebra.rmul!(p.unscaled_inverse_transform * y, p.scale_inverse)
+	## return LinearAlgebra.rmul!(p.unscaled_inverse_transform * y, p.scale_inverse)
+	rtn   = p.unscaled_inverse_transform * y
+	@inbounds rtn .*= p.scale_inverse
+	return rtn 
 end
 
 
 # the adjoint * x is the unscaled inverse transform but with forward scaling
 
 function Base.:*(p::AdjointFFTplan{Tf,d,Ti}, x::Array{Ti,d}) where {d,Tf,Ti} 
-	return LinearAlgebra.rmul!(p.p.unscaled_inverse_transform * x, p.p.scale_forward)
+	## return LinearAlgebra.rmul!(p.p.unscaled_inverse_transform * x, p.p.scale_forward)
+	rtn = p.p.unscaled_inverse_transform * x
+	@inbounds rtn .*= p.p.scale_forward
 end
 
 
 function Base.:\(p::AdjointFFTplan{Tf,d,Ti}, y::Array{Tf,d}) where {d,Tf,Ti}
-	return LinearAlgebra.rmul!(p.p.unscaled_forward_transform * y, p.p.scale_inverse)
+	## return LinearAlgebra.rmul!(p.p.unscaled_forward_transform * y, p.p.scale_inverse)
+	rtn   = p.p.unscaled_forward_transform * y
+	@inbounds rtn .*= p.p.scale_inverse
+	return rtn
 end
 
 

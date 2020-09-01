@@ -8,37 +8,51 @@
 # features of the grid from w.period
 # =================================
 
-Δpix(w::𝕎)  = @. w.period / w.sz
+function Δpix(w::𝕎{Tf}) where {Tf}
+    rTf = real(Tf) 
+    rTf.(w.period ./ w.sz)
+end
 
-Δfreq(w::𝕎) = @. 2π / w.period
+function Δfreq(w::𝕎{Tf}) where {Tf} 
+    rTf = real(Tf) 
+    rTf.((2π) ./ w.period)
+end
 
-nyq(w::𝕎)   = π ./ Δpix(w)
+function nyq(w::𝕎{Tf}) where {Tf} 
+    rTf = real(Tf) 
+    rTf.(π ./ Δpix(w))
+end
 
 # Note: this gives the area element of 
 # only the fourier tranformed coordinates
-Ωx(w::𝕎)  = prod(Δr[1] for Δr in zip(Δpix(w), w.region) if Δr[2])
+Ωx(w::𝕎) = prod(Δr[1] for Δr in zip(Δpix(w), w.region) if Δr[2])
 
-Ωk(w::𝕎)  = prod(Δr[1] for Δr in zip(Δfreq(w), w.region) if Δr[2])
+Ωk(w::𝕎) = prod(Δr[1] for Δr in zip(Δfreq(w), w.region) if Δr[2])
 
 
 # 𝕎 scalings
 # =================================
 
 "`nv_scale(w::𝕎)->Number` returns the multiplicative scale of the inverse of w::𝕎"
-function inv_scale(w::𝕎{Tf,d}) where {Tf,d}
+function inv_scale(w::𝕎{Tf}) where {Tf}
+    rTf = real(Tf)
     ifft_normalization = FFTW.normalization(
-                real(Tf), 
+                rTf, 
                 w.sz, 
                 tuple(findall(w.region)...)
             )
-    return ifft_normalization / w.scale
+    return rTf(ifft_normalization / w.scale)
 end
 
-function unitary_scale(w::𝕎{Tf,d}) where {Tf,d}
-    return prod(1/√i[1] for i in zip(w.sz, w.region) if i[2])
+function unitary_scale(w::𝕎{Tf}) where {Tf}
+    rTf = real(Tf)
+    return rTf(prod(1/√i[1] for i in zip(w.sz, w.region) if i[2]))
 end
 
-ordinary_scale(w::𝕎{Tf,d}) where {Tf,d} = Ωx(w) / ((2π)^(sum(w.region)/2))
+function ordinary_scale(w::𝕎{Tf}) where {Tf} 
+    rTf = real(Tf)
+    rTf(Ωx(w) / ((2π)^(sum(w.region)/2)))
+end
 
 # Test that inv_scale(ordinary_scale(w))== Ωk(w) / ((2π)^(sum(w.region)/2))
 
