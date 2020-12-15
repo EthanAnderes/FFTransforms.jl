@@ -45,7 +45,10 @@ struct RegionBool{rg} end #e.g. (false,true,false,true)#
 	d          = length(sz_forward_arg)
 	region_tp  = tuple(findall(region)...)
 	X          = Array{Tf,d}(undef, sz_forward_arg...) 
-	flags      = FFTW.ESTIMATE #fixme: the other ones don't seem to work here 
+	# TODO: figure out how to pass a global variable that sets this flag
+	flags      = FFTW.ESTIMATE 
+	# flags      = FFTW.MEASURE 
+	# flags      = FFTW.PATIENT #fixme: bus error
 	timelim    = 20.0
 
 	if Tf <: FFTR
