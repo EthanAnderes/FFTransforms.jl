@@ -70,9 +70,9 @@ FF = FFTransforms
 	sW = @inferred W * (1/√(2π))
 	uW = @inferred unitary_scale(W) * W
 	oW = @inferred ordinary_scale(W) * W
-	W′ = @inferred unscale𝕎(sW)
-	rW = @inferred real𝕎(W)
-	cW = @inferred complex𝕎(W)
+	W′ = @inferred unscale(sW)
+	rW = @inferred real(W)
+	cW = @inferred complex(W)
 
 
 	# TODO get these inferred correctly
@@ -124,6 +124,7 @@ end
 	scale_forward =  (1, true, 1.0, 0.1f0)
 
 	for indx = 1:length(T_forward_arg)
+		#@show indx
 		Tf  = T_forward_arg[indx]
 		szf = sz_forward_arg[indx]
 		reg = region[indx]

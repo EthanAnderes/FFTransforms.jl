@@ -99,15 +99,15 @@ end
 
 Base.:*(w::𝕎, s::Number) = s*w
 
-function unscale𝕎(w::𝕎{Tf,d}) where {Tf,d}
+function unscale(w::𝕎{Tf,d}) where {Tf,d}
 	𝕎{Tf,d}(w.sz, w.region, true, w.period)
 end
 
-function real𝕎(w::𝕎{Tf,d}) where {Tf,d}
+function Base.real(w::𝕎{Tf,d}) where {Tf,d}
 	𝕎{real(Tf),d}(w.sz, w.region, w.scale, w.period)
 end
 
-function complex𝕎(w::𝕎{Tf,d}) where {Tf,d}
+function Base.complex(w::𝕎{Tf,d}) where {Tf,d}
 	𝕎{Complex{real(Tf)},d}(w.sz, w.region, w.scale, w.period)
 end
 

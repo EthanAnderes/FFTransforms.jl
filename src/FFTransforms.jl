@@ -94,7 +94,7 @@ export	Δpix, Δfreq, nyq, Ωx, Ωk,
 
 include("constructors.jl")
 
-export 𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗, unscale𝕎, real𝕎, complex𝕎
+export 𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗, unscale #, real, complex
 
 
 end # Module
