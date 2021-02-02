@@ -35,7 +35,7 @@ struct SizeInt{sz} end #e.g. (512,1024,2,4)#
 
 struct RegionBool{rg} end #e.g. (false,true,false,true)#
 
-@generated function plan(
+@generated function XFields.plan(
 		::Type{Tf}, 
 		::Type{SizeInt{sz_forward_arg}}, 
 		::Type{RegionBool{region}},

@@ -71,7 +71,7 @@ F = ordinary_scale(W) * W
 plan(F)*f ≈ ∫∫ exp(-√(-1)(k₂⋅x₂+k₃⋅x₃))f(x₁,x₂,x₃,x₄)dx₂dx₃/(2π)
 ```
 
-where the region of integration in the above integral is `[0,π]×[0,2π]`. In this case the function `Ωx(F) == (π/128) * (2π/16)` which approximates `dx₂dx₃` in the Riemann sum of the above integral.
+where the region of integration in the above integral is `[0,π]×[0,2π]`. In this case the function `Ωpix(F) == (π/128) * (2π/16)` which approximates `dx₂dx₃` in the Riemann sum of the above integral.
 
 ```julia 
 pF  = plan(F)

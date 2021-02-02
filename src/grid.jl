@@ -25,9 +25,9 @@ end
 
 # Note: this gives the area element of 
 # only the fourier tranformed coordinates
-Ωx(w::𝕎) = prod(Δr[1] for Δr in zip(Δpix(w), w.region) if Δr[2])
+Ωpix(w::𝕎) = prod(Δr[1] for Δr in zip(Δpix(w), w.region) if Δr[2])
 
-Ωk(w::𝕎) = prod(Δr[1] for Δr in zip(Δfreq(w), w.region) if Δr[2])
+Ωfreq(w::𝕎) = prod(Δr[1] for Δr in zip(Δfreq(w), w.region) if Δr[2])
 
 
 # 𝕎 scalings
@@ -51,10 +51,10 @@ end
 
 function ordinary_scale(w::𝕎{Tf}) where {Tf} 
     rTf = real(Tf)
-    rTf(Ωx(w) / ((2π)^(sum(w.region)/2)))
+    rTf(Ωpix(w) / ((2π)^(sum(w.region)/2)))
 end
 
-# Test that inv_scale(ordinary_scale(w))== Ωk(w) / ((2π)^(sum(w.region)/2))
+# Test that inv_scale(ordinary_scale(w))== Ωfreq(w) / ((2π)^(sum(w.region)/2))
 
 
 

@@ -2,8 +2,7 @@ module FFTransforms
 
 using LinearAlgebra
 using FFTW
-using XFields: Transform
-import XFields: plan, size_in, size_out, eltype_in, eltype_out
+using XFields
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
@@ -40,30 +39,30 @@ struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real} <: Transform{Tf,d}
 	end
 end 
 
-@inline size_in(w::𝕎) = w.sz
+@inline XFields.size_in(w::𝕎) = w.sz
 
-size_out(w::𝕎{Tf}) where {Tf<:FFTC} = w.sz
+XFields.size_out(w::𝕎{Tf}) where {Tf<:FFTC} = w.sz
 
-function size_out(w::𝕎{Tf,d})::NTuple{d,Int} where {Tf<:FFTR,d}
+function XFields.size_out(w::𝕎{Tf,d})::NTuple{d,Int} where {Tf<:FFTR,d}
     ir = findfirst(w.region)
     return map(w.sz, tuple(1:d...)) do nᵢ, i
         i==ir ? nᵢ÷2+1 : nᵢ
     end
 end
 
-@inline eltype_in(w::𝕎{Tf,d}) where {Tf,d}  = Tf
+@inline XFields.eltype_in(w::𝕎{Tf,d}) where {Tf,d}  = Tf
 
-@inline eltype_out(w::𝕎{Tf,d}) where {Tf,d} = Complex{real(Tf)}
+@inline XFields.eltype_out(w::𝕎{Tf,d}) where {Tf,d} = Complex{real(Tf)}
 
 include("plan_fft.jl")
 
-function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTR,Tsf} 
+function XFields.plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTR,Tsf} 
 	Ti   = Complex{Tf}
 	Tsi  = promote_type(Tf, Tsf)
 	plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::FFTplan{Tf,d,Ti,Tsf,Tsi}
 end 
 
-function plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTC,Tsf} 
+function XFields.plan(w::𝕎{Tf,d,Tsf}) where {d,Tf<:FFTC,Tsf} 
 	Ti  = Tf
 	Tsi = promote_type(real(Tf), Tsf)
 	plan(Tf,SizeInt{w.sz},RegionBool{w.region},w.scale)::FFTplan{Tf,d,Ti,Tsf,Tsi}
@@ -79,11 +78,17 @@ export size_in, size_out, eltype_in, eltype_out, plan, FFTplan, AdjointFFTplan
 
 include("grid.jl")
 
-export	Δpix, Δfreq, nyq, Ωx, Ωk, 
+export	Δpix, Δfreq, nyq, Ωpix, Ωfreq, 
 		inv_scale, unitary_scale, ordinary_scale,
 		pix, freq, fullpix, fullfreq, wavenum
 
 #TODO: incorperate get_rFFTimpulses
+
+
+## rand_in, rand_out (incomplete), dot_in, dot_out (incomplete)
+# =====================================
+
+include("methods.jl")
 
 
 ## Extra convienent constructors
@@ -94,7 +99,7 @@ export	Δpix, Δfreq, nyq, Ωx, Ωk,
 
 include("constructors.jl")
 
-export 𝕀, 𝕎, 𝕎32, r𝕎, r𝕎32, ⊗, unscale #, real, complex
+export 𝕀, 𝕎, ⊗, unscale #, real, complex
 
 
 end # Module

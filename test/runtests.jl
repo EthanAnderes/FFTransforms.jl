@@ -23,21 +23,20 @@ FF = FFTransforms
 	Wc  = 𝕎(ns[1], 2π) * 2.0f0 
 	Wd  = 𝕎(ns[2], 2π)  
 
-	W32a  = 𝕎32(ns[1])  
-	W32b  = 𝕎32(ns[2]) * 2.0  
-	W32c  = 𝕎32(ns[1], 2π) * 2.0f0 
-	W32d  = 𝕎32(ns[2], 2π)  
+	W32a  = 𝕎(Float32, ns[1])  
+	W32b  = 𝕎(Float32, ns[2]) * 2.0  
+	W32c  = 𝕎(Float32, ns[1], 2π) * 2.0f0 
+	W32d  = 𝕎(Float32, ns[2], 2π)  
 
+	rWa  = 𝕎(Float64, ns[1])  
+	rWb  = 𝕎(Float64, ns[2]) * 2.0  
+	rWc  = 𝕎(Float64, ns[1], 2π) * 2.0f0 
+	rWd  = 𝕎(Float64, ns[2], 2π)  
 
-	rWa  = r𝕎(ns[1])  
-	rWb  = r𝕎(ns[2]) * 2.0  
-	rWc  = r𝕎(ns[1], 2π) * 2.0f0 
-	rWd  = r𝕎(ns[2], 2π)  
-
-	rW32a  = 𝕎32(ns[1])  
-	rW32b  = 𝕎32(ns[2]) * 2.0  
-	rW32c  = 𝕎32(ns[1], 2π) * 2.0f0 
-	rW32d  = 𝕎32(ns[2], 2π)  
+	rW32a  = 𝕎(Float32, ns[1])  
+	rW32b  = 𝕎(Float32, ns[2]) * 2.0  
+	rW32c  = 𝕎(Float32, ns[1], 2π) * 2.0f0 
+	rW32d  = 𝕎(Float32, ns[2], 2π)  
 
 
 	# kron of 1-d 
@@ -56,8 +55,8 @@ FF = FFTransforms
 	Δx   = @inferred Δpix(W)
 	Δk   = @inferred Δfreq(W)
 	nq   = @inferred nyq(W)
-	ωx   = @inferred Ωx(W)
-	ωk   = @inferred Ωk(W) 
+	ωx   = @inferred Ωpix(W)
+	ωk   = @inferred Ωfreq(W) 
 	invs = @inferred inv_scale(W)
 	us   = @inferred unitary_scale(W)
 	os   = @inferred ordinary_scale(W)
@@ -129,7 +128,7 @@ end
 		szf = sz_forward_arg[indx]
 		reg = region[indx]
 		scf = scale_forward[indx]
-		FT = plan(
+		FT = FF.plan(
 			Tf, 
 			FF.SizeInt{szf}, 
 			FF.RegionBool{reg}, 

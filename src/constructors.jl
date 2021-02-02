@@ -21,6 +21,8 @@ function 𝕎(::Type{Tf}, sz::NTuple{d,Int}, p::NTuple{d,Tp}) where {Tf<:FFTN, d
 end
 
 
+# Do we really need these ??  .... slated for removal
+
 𝕎(sz::Int) = 𝕎(C64, sz)
 
 𝕎(sz::Int, p::Real) = 𝕎(C64, sz, p)
