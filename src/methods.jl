@@ -3,13 +3,13 @@
 # randn_in and rand_out
 # =====================================
 
-function randn_in(tm::𝕎{Tf}) where {Tf}
+function randn_in(tm::TM) where {Tf<:Real, TM<:𝕎{Tf}}
     wx = randn(eltype_in(tm), size_in(tm)) ./ sqrt.(Ωpix(tm))
     wx
 end
 
 # This needs testing 
-function randn_out(tm::𝕎{Complex{T}}) where {T<:Real}
+function randn_out(tm::TM) where {Tf<:Complex, TM<:𝕎{Tf}}
     wk = randn(eltype_in(tm), size_in(tm)) ./ sqrt.(Ωfreq(tm))
     wk
 end
