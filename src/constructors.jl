@@ -95,6 +95,11 @@ function ⊗(w::𝕎{Tf,d,Tsf,Tp}, v::𝕎{Rf,n,Rsf,Rp}) where {Tf<:FFTN,Rf<:FFT
 	return 𝕎{Tf,d+n}(sz, region, scale, period)
 end
 
+⊗(w, v, u...) = ⊗(⊗(w, v), u...)
+
+##
+
+
 function Base.:*(s::Number, w::𝕎{Tf,d}) where {d,Tf}
 	𝕎{Tf,d}(w.sz, w.region, s*w.scale, w.period)
 end
