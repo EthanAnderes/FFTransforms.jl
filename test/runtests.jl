@@ -52,26 +52,26 @@ FF = FFTransforms
 	szo  = @inferred size_out(W)
 	WTf  = @inferred eltype_in(W)
 	WTi  = @inferred eltype_out(W)
-	Δx   = @inferred Δpix(W)
-	Δk   = @inferred Δfreq(W)
-	nq   = @inferred nyq(W)
-	ωx   = @inferred Ωpix(W)
-	ωk   = @inferred Ωfreq(W) 
-	invs = @inferred inv_scale(W)
-	us   = @inferred unitary_scale(W)
-	os   = @inferred ordinary_scale(W)
-	xvecs   = @inferred pix(W)
-	kvecs   = @inferred freq(W)
-	xarrays = @inferred fullpix(W)
-	karrays = @inferred fullfreq(W)
-	λmat    = @inferred wavenum(W)
+	Δx   = @inferred FF.Δpix(W)
+	Δk   = @inferred FF.Δfreq(W)
+	nq   = @inferred FF.nyq(W)
+	ωx   = @inferred FF.Ωpix(W)
+	ωk   = @inferred FF.Ωfreq(W) 
+	invs = @inferred FF.inv_scale(W)
+	us   = @inferred FF.unitary_scale(W)
+	os   = @inferred FF.ordinary_scale(W)
+	xvecs   = @inferred FF.pix(W)
+	kvecs   = @inferred FF.freq(W)
+	xarrays = @inferred FF.fullpix(W)
+	karrays = @inferred FF.fullfreq(W)
+	λmat    = @inferred FF.wavenum(W)
 
 	sW = @inferred W * (1/√(2π))
-	uW = @inferred unitary_scale(W) * W
-	oW = @inferred ordinary_scale(W) * W
-	W′ = @inferred unscale(sW)
-	rW = @inferred real(W)
-	cW = @inferred complex(W)
+	uW = @inferred FF.unitary_scale(W) * W
+	oW = @inferred FF.ordinary_scale(W) * W
+	W′ = @inferred FF.unscale(sW)
+	rW = @inferred FF.real(W)
+	cW = @inferred FF.complex(W)
 
 
 	# TODO get these inferred correctly
