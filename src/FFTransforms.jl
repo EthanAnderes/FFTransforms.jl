@@ -79,7 +79,7 @@ export size_in, size_out, eltype_in, eltype_out, plan, FFTplan, AdjointFFTplan
 include("grid.jl")
 
 # export  Δpix, Δfreq, nyq, Ωpix, Ωfreq, pix, freq, fullpix, fullfreq, wavenum
-export inv_scale, unitary_scale, ordinary_scale,
+export inv_scale, unitary_scale, ordinary_scale
 
 #TODO: incorperate get_rFFTimpulses
 
