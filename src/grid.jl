@@ -33,6 +33,19 @@ end
 # 𝕎 scalings
 # =================================
 
+function unscale(w::𝕎{Tf,d}) where {Tf,d}
+    𝕎{Tf,d}(w.sz, w.region, true, w.period)
+end
+
+
+function Base.real(w::𝕎{Tf,d}) where {Tf,d}
+    𝕎{real(Tf),d}(w.sz, w.region, w.scale, w.period)
+end
+
+function Base.complex(w::𝕎{Tf,d}) where {Tf,d}
+    𝕎{Complex{real(Tf)},d}(w.sz, w.region, w.scale, w.period)
+end
+
 "`nv_scale(w::𝕎)->Number` returns the multiplicative scale of the inverse of w::𝕎"
 function inv_scale(w::𝕎{Tf}) where {Tf}
     rTf = real(Tf)
@@ -55,6 +68,7 @@ function ordinary_scale(w::𝕎{Tf}) where {Tf}
 end
 
 # Test that inv_scale(ordinary_scale(w))== Ωfreq(w) / ((2π)^(sum(w.region)/2))
+
 
 
 

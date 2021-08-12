@@ -1,7 +1,7 @@
 using FFTransforms
+import FFTransforms as FF
 using FFTW
 using Test
-FF = FFTransforms
 
 
 
@@ -111,7 +111,35 @@ FF = FFTransforms
 end
 
 
+@testset "𝕌, 𝔽" begin
 
+	Ia  = 𝕀(100)  
+	for (n,T,p) in zip(8:11, (Float32, Float64, ComplexF32, ComplexF64), (1, π, 0.1, 2π))
+		@test 𝕌(n)         == 𝕎(n) * FF.unitary_scale(𝕎(n))
+		@test 𝕌(n)⊗Ia      == (𝕎(n)⊗Ia) * FF.unitary_scale(𝕎(n)⊗Ia)
+		@test Ia⊗𝕌(n)      == (Ia⊗𝕎(n)) * FF.unitary_scale(Ia⊗𝕎(n))
+		@test 𝕌(T,n)       == 𝕎(T,n) * FF.unitary_scale(𝕎(T,n))
+		@test 𝕌(T,n)⊗Ia    == (𝕎(T,n)⊗Ia) * FF.unitary_scale(𝕎(T,n)⊗Ia)
+		@test Ia⊗𝕌(T,n)    == (Ia⊗𝕎(T,n)) * FF.unitary_scale(Ia⊗𝕎(T,n))
+		@test 𝕌(T,n,p)     == 𝕎(T,n,p) * FF.unitary_scale(𝕎(T,n,p))
+		@test 𝕌(T,n,p)⊗Ia  == (𝕎(T,n,p)⊗Ia) * FF.unitary_scale(𝕎(T,n,p)⊗Ia)
+		@test Ia⊗𝕌(T,n,p)  == (Ia⊗𝕎(T,n,p)) * FF.unitary_scale(Ia⊗𝕎(T,n,p))
+		@test real(𝕌(n))   == 𝕌(Float64,n)
+
+		@test 𝔽(n)         == 𝕎(n) * FF.ordinary_scale(𝕎(n))
+		@test 𝔽(n)⊗Ia      == (𝕎(n)⊗Ia) * FF.ordinary_scale(𝕎(n)⊗Ia)
+		@test Ia⊗𝔽(n)      == (Ia⊗𝕎(n)) * FF.ordinary_scale(Ia⊗𝕎(n))
+		@test 𝔽(T,n)       == 𝕎(T,n) * FF.ordinary_scale(𝕎(T,n))
+		@test 𝔽(T,n)⊗Ia    == (𝕎(T,n)⊗Ia) * FF.ordinary_scale(𝕎(T,n)⊗Ia)
+		@test Ia⊗𝔽(T,n)    == (Ia⊗𝕎(T,n)) * FF.ordinary_scale(Ia⊗𝕎(T,n))
+		@test 𝔽(T,n,p)     == 𝕎(T,n,p) * FF.ordinary_scale(𝕎(T,n,p))
+		@test 𝔽(T,n,p)⊗Ia  == (𝕎(T,n,p)⊗Ia) * FF.ordinary_scale(𝕎(T,n,p)⊗Ia)
+		@test Ia⊗𝔽(T,n,p)  == (Ia⊗𝕎(T,n,p)) * FF.ordinary_scale(Ia⊗𝕎(T,n,p))
+		@test real(𝔽(n))   == 𝔽(Float64,n) == 𝕎(Float64, n) * FF.ordinary_scale(𝕎(Float64, n))
+		@test real(𝔽(n))   == 𝔽(Float64,n)
+	end
+
+end
 
 
 

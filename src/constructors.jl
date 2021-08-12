@@ -7,11 +7,13 @@
 #	• Construct directly from 𝕎{Tf}(sz,rg,sc,pd)  
 # 	• via kron of 𝕀 and 𝕎 
 
-𝕎(::Type{Tf}, sz::Int) where Tf<:FFTN  = 𝕎{Tf,1}((sz,), (true,), true, (sz,))
+# ## 𝕎
 
+𝕎(::Type{Tf}, sz::Int)          where Tf<:FFTN = 𝕎{Tf,1}((sz,), (true,), true, (sz,))
 𝕎(::Type{Tf}, sz::Int, p::Real) where Tf<:FFTN = 𝕎{Tf,1}((sz,), (true,), true, (p,))
+𝕎(sz::Int)          = 𝕎(C64, sz)
+𝕎(sz::Int, p::Real) = 𝕎(C64, sz, p)
 
-#TODO add a test for these
 function 𝕎(::Type{Tf}, sz::NTuple{d,Int}) where {Tf<:FFTN, d} 
 	𝕎{Tf,d}(sz, tuple(trues(d)...), true, sz)
 end
@@ -21,23 +23,20 @@ function 𝕎(::Type{Tf}, sz::NTuple{d,Int}, p::NTuple{d,Tp}) where {Tf<:FFTN, d
 end
 
 
-# Do we really need these ??  .... slated for removal
+# ## 𝕌 (note: this constructs the correct scaling of 𝕎)
 
-𝕎(sz::Int) = 𝕎(C64, sz)
+𝕌(::Type{Tf}, sz)    where Tf<:FFTN = (w = 𝕎(Tf, sz);    w*unitary_scale(w))
+𝕌(::Type{Tf}, sz, p) where Tf<:FFTN = (w = 𝕎(Tf, sz, p); w*unitary_scale(w))
+𝕌(sz)                = (w = 𝕎(sz);    w*unitary_scale(w))
+𝕌(sz, p)             = (w = 𝕎(sz, p); w*unitary_scale(w))
 
-𝕎(sz::Int, p::Real) = 𝕎(C64, sz, p)
+# ## 𝔽 (note: this constructs the correct scaling of 𝕎)
 
-𝕎32(sz::Int) = 𝕎(C32, sz)
+𝔽(::Type{Tf}, sz)    where Tf<:FFTN = (w=𝕎(Tf, sz);    w*ordinary_scale(w))
+𝔽(::Type{Tf}, sz, p) where Tf<:FFTN = (w=𝕎(Tf, sz, p); w*ordinary_scale(w))
+𝔽(sz)                = (w=𝕎(sz);    w*ordinary_scale(w))
+𝔽(sz, p)             = (w=𝕎(sz, p); w*ordinary_scale(w))
 
-𝕎32(sz::Int, p::Real) = 𝕎(C32, sz, p)
-
-r𝕎(sz::Int) = 𝕎(F64, sz)
-
-r𝕎(sz::Int, p::Real) = 𝕎(F64, sz, p)
-
-r𝕎32(sz::Int) = 𝕎(F32, sz)
-
-r𝕎32(sz::Int, p::Real) = 𝕎(F32, sz, p)
 
 
 # 𝕀 only encode sz and period of the grid
@@ -48,7 +47,7 @@ struct 𝕀{d,Tp<:Real}
 	𝕀{d}(sz::NTuple{d,Int},period::NTuple{d,Tp}) where {d,Tp} = new{d,Tp}(sz,period)
 end
 
-𝕀(sz::Int) = 𝕀{1}((sz,),(sz,))
+𝕀(sz::Int)         = 𝕀{1}((sz,),(sz,))
 𝕀(sz::Int,p::Real) = 𝕀{1}((sz,), (p,))
 
 
@@ -99,24 +98,9 @@ end
 
 ##
 
-
 function Base.:*(s::Number, w::𝕎{Tf,d}) where {d,Tf}
 	𝕎{Tf,d}(w.sz, w.region, s*w.scale, w.period)
 end
 
 Base.:*(w::𝕎, s::Number) = s*w
-
-function unscale(w::𝕎{Tf,d}) where {Tf,d}
-	𝕎{Tf,d}(w.sz, w.region, true, w.period)
-end
-
-function Base.real(w::𝕎{Tf,d}) where {Tf,d}
-	𝕎{real(Tf),d}(w.sz, w.region, w.scale, w.period)
-end
-
-function Base.complex(w::𝕎{Tf,d}) where {Tf,d}
-	𝕎{Complex{real(Tf)},d}(w.sz, w.region, w.scale, w.period)
-end
-
-
 
