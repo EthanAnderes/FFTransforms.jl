@@ -3,6 +3,7 @@ module FFTransforms
 using LinearAlgebra
 using FFTW
 using XFields
+using KahanSummation: sum_kbn
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
