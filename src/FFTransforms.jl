@@ -30,7 +30,7 @@ Plan{T,d,G} = Union{
 # This allows one to easily store 𝕎 as an field in an array type 
 # wrapper. 
 
-struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real} <: Transform{Tf,d}
+struct 𝕎{Tf<:FFTN, d, Tsf<:Number, Tp<:Real} <: Transform
 	sz::NTuple{d,Int} 
 	region::NTuple{d,Bool}
 	scale::Tsf 
